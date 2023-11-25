@@ -10,10 +10,10 @@ from langchain.schema.messages import HumanMessage, SystemMessage
 CHUNK_SIZE = 30
 
 
-def process_chunk_element(messages):
-    chat = ChatOpenAI(model="gpt-3.5-turbo-1106", temperature=0.8, request_timeout=5)
-    res = chat.invoke(messages)
-    return res
+# def process_chunk_element(messages):
+#     chat = ChatOpenAI(model="gpt-3.5-turbo-1106", temperature=0.8, request_timeout=5)
+#     res = chat.invoke(messages)
+#     return res
 
 
 def process_chunk_element2(i, queue, item):
@@ -22,20 +22,20 @@ def process_chunk_element2(i, queue, item):
     queue.put((i, res))
 
 
-def process_chunk(chunk, timeout=15):
-    with Pool(len(chunk)) as pool:
-        result_futures = [pool.apply_async(process_chunk_element, (item,)) for item in chunk]
-        results = []
-        for future in result_futures:
-            try:
-                result = future.get(timeout)
-                results.append(result)
-            except TimeoutError:
-                print("timeout!")
-                timeout = 0  # tolerate only first timeout
-                results.append(None)
-                # Here I have to kill the process
-    return results
+# def process_chunk(chunk, timeout=15):
+#     with Pool(len(chunk)) as pool:
+#         result_futures = [pool.apply_async(process_chunk_element, (item,)) for item in chunk]
+#         results = []
+#         for future in result_futures:
+#             try:
+#                 result = future.get(timeout)
+#                 results.append(result)
+#             except TimeoutError:
+#                 print("timeout!")
+#                 timeout = 0  # tolerate only first timeout
+#                 results.append(None)
+#                 # Here I have to kill the process
+#     return results
 
 
 def process_chunk2(chunk, timeout=13):

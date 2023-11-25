@@ -1,26 +1,32 @@
 from typing import List
 from string import ascii_uppercase
 
-from datasets import load_dataset
+from datasets import load_dataset, concatenate_datasets
 
 
-def make_arc_prompt(debug=False) -> List[str]:
+def make_arc_prompt() -> List[str]:
+    # make from train and validation split
     ds = load_dataset("ai2_arc", 'ARC-Challenge')
 
     # use only test split (1172 examples)
-    ds = ds['test']
-    queries = []
+    # ds = ds['test']
 
+    # use train + valid split
+    print("use train + validation + test split...")
+    ds = concatenate_datasets([ds['train'], ds['validation'], ds['test']])
+
+    queries = []
     for i, example in enumerate(ds):
         answerkey = example['answerKey']
         label = example['choices']['label']
         index = label.index(answerkey)
 
-        queries.append(
-            f"Translate below to Korean:\n---\n1. {example['question']}\n2. {example['choices']['text'][index]}")
+        query = example['question'].strip()
+        if not (query.endswith('?') or query.endswith('.')):
+            query = query + '...'
 
-    if debug:
-        queries = queries[:120]
+        queries.append(
+            f'A: "{query}"\nB: "{example["choices"]["text"][index]}"')
     return queries
 
 
@@ -48,6 +54,15 @@ def make_mmlu_prompt():
         mmlu_d[subset_name] = tmp
 
 
+def make_truthfulqa_prompt() -> List[str]:
+    # tru_multiplechoice = load_dataset("truthful_qa", 'multiple_choice')
 
-def make_truthfulqa_prompt():
-    ...
+    # use truthful_qa generation
+    tru_generation = load_dataset("truthful_qa", 'generation')['validation']
+
+    queries = []
+    for i, example in enumerate(tru_generation):
+        queries.append(
+            f'A: "{example["question"]}"\nB: "{example["best_answer"]}"'
+        )
+    return queries
