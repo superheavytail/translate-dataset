@@ -1,4 +1,5 @@
 import re
+from string import ascii_uppercase
 
 from utils import load_bobj, get_saving_filename_safely
 
@@ -174,5 +175,105 @@ def process_truthfulqa():
         result['response'].append(a)
 
 
+def process_kocommongenv2():
+    s = r"crawldata.txt"
+    with open(s, 'rt') as f:
+        text = f.read()
+    text_chunks = text.split("---")
+    examples = {'conceptset': [], 'a1': [], 'a2': [], 'a3': [], 'a4': [], 'label': []}
+    for chunk in text_chunks:
+        l = re.findall(r"Concept Set: (.*)\s?\n", chunk)
+        if l:
+            s = l[0]
+            s = f"Concept Set:{{{s}}}"
+            examples['conceptset'].append(s)
+
+        l = re.findall(r"\n\n\n(.*)\n\n\n(.*)\n\n\n(.*)\n\n\n(.*)\n+답:", chunk)[0]
+        assert len(l) == 4
+        l = [e.strip() for e in l]
+        examples['a1'].append(l[0])
+        examples['a2'].append(l[1])
+        examples['a3'].append(l[2])
+        examples['a4'].append(l[3])
+
+        l = re.findall(r"답:(\d)\n?", chunk)
+        assert len(l) == 1
+        examples['label'].append(int(l[0]))
+
+    # make query and response
+    query = []
+    response = []
+    for i in range(len(examples['conceptset'])):
+        c = examples['conceptset'][i]
+        a1 = examples['a1'][i]
+        a2 = examples['a2'][i]
+        a3 = examples['a3'][i]
+        a4 = examples['a4'][i]
+        label = examples['label'][i]
+        q = f"concept set: {c}\n1. {a1}\n2. {a2}\n3. {a3}\n4. {a4}\nAnswer: "
+        a = f"{label}. {examples[f'a{label}'][i]}"
+        query.append(q)
+        response.append(a)
+
+
+def process_mmlu():
+    translated = load_bobj("chatgpt_results/mmlu-3.pkl")
+    targets = load_bobj("chatgpt_results/mmlu_targets-3.pkl")
+    assert len([True for t in targets if t in ['A', 'B', 'C', 'D']]) == len(targets)  # validate every target value is 0, 1, 2, 3
+    assert len(translated) == len(targets)
+
+    dataset_dict = {"input": [], "A": [], "B": [], "C": [], "D": [], "target": []}
+    # do regular expression search
+    for i in range(len(targets)):
+        if not translated[i]:
+            continue  # translated is None
+        entities = re.findall(
+            r'A\s?:\s*"?(.*)"?\s*\n*B\s?:\s*"?(.*)"?\s*\n*A\s?:\s*"?(.*)"?\s*\n*B\s?:\s*"?(.*)"?\s*\n*A\s?:\s*"?(.*)"?\s*\n*',
+            translated[i])
+        if not entities:
+            continue  # re cannot search pattern
+        if not len(entities[0]) == 5:
+            continue  # re cannot find 5 entities
+        q = entities[0][0]
+        a1 = entities[0][1]
+        a2 = entities[0][2]
+        a3 = entities[0][3]
+        a4 = entities[0][4]
+        # gold = entities[0][targets[i] + 1]  # since target value started from 0
+
+        dataset_dict['input'].append(q)
+        dataset_dict['A'].append(a1)
+        dataset_dict['B'].append(a2)
+        dataset_dict['C'].append(a3)
+        dataset_dict['D'].append(a4)
+        dataset_dict['target'].append(targets[i])
+
+
 def main():
     process_arc()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

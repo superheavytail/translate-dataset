@@ -30,7 +30,7 @@ def make_arc_prompt() -> List[str]:
     return queries
 
 
-def make_mmlu_prompt():
+def make_mmlu_prompt(debug, max_each_subset=100):
     # not for use...
     # I will use handcrafted dataset
     mmlu_subsets = ['high_school_european_history', 'business_ethics', 'clinical_knowledge', 'medical_genetics',
@@ -47,11 +47,18 @@ def make_mmlu_prompt():
                     'jurisprudence', 'world_religions', 'sociology', 'us_foreign_policy', 'high_school_macroeconomics',
                     'computer_security', 'moral_scenarios', 'moral_disputes', 'electrical_engineering', 'astronomy',
                     'college_biology']
-    subsets_for_use = ['astronomy', 'moral_scenarios', 'high_school_mathematics']
-    mmlu_d = {}
+    # subsets_for_use = ['astronomy', 'moral_scenarios', 'high_school_mathematics']
+    if debug == True:
+        mmlu_subsets = mmlu_subsets[:5]
+    queries = []
     for subset_name in mmlu_subsets:
-        tmp = load_dataset("lukaemon/mmlu", subset_name)
-        mmlu_d[subset_name] = tmp
+        tmp_ds = load_dataset("lukaemon/mmlu", subset_name)
+        tmp_ds = concatenate_datasets([tmp_ds['train'], tmp_ds['validation'], tmp_ds['test']])
+        for i in range(len(tmp_ds)):
+            item = tmp_ds[i]
+            q = f"A: {item['input']}\nB: {item['A']}\nA: {item['B']}\nB: {item['C']}\nA: {item['D']}"
+            queries.append((q, item['target']))
+    return queries
 
 
 def make_truthfulqa_prompt() -> List[str]:

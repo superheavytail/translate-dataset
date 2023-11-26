@@ -1,3 +1,5 @@
 translated_ds
-__pycache__*
+__pycache__/
+__pycache__
 chatgpt_results
+crawldata.txt

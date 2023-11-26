@@ -4,7 +4,7 @@ from pathlib import Path
 import itertools
 import re
 
-from utils import load_bobj
+from utils import load_bobj, get_saving_filename_safely, pickle_bobj
 from batched_chatgpt import call_chatgpt
 import prompt_maker
 
@@ -14,15 +14,20 @@ CHATGPT_SAVE_DIR = "./chatgpt_results/"
 CHATGPT_CHUNK_SIZE = 30
 TIMEOUT_EACH = 20
 SLEEP_BETWEEN_CHUNK = 5
-DATASET_NAME = ['arc', 'mmlu', 'truthfulqa'][0]
+DATASET_NAME = ['arc', 'mmlu', 'truthfulqa'][1]
 DEBUG = False
 USE_API = True
 
 
 def main():
-    prompts = getattr(prompt_maker, f"make_{DATASET_NAME}_prompt")()
+    prompts = getattr(prompt_maker, f"make_{DATASET_NAME}_prompt")(DEBUG)
     if DEBUG:
         prompts = prompts[:10]
+    if DATASET_NAME == 'mmlu':
+        targets = [e[1] for e in prompts]
+        prompts = [e[0] for e in prompts]
+        targets_saving_name = get_saving_filename_safely("./chatgpt_results/mmlu_targets.pkl")
+        pickle_bobj(targets, targets_saving_name)
 
     file_dir = Path(CHATGPT_SAVE_DIR) / f"{DATASET_NAME}.pkl"
 

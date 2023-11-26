@@ -28,7 +28,7 @@ def process_chunk(chunk, timeout=13):
         p = Process(target=process_chunk_element, args=(i, output_queue, item))
         processes.append(p)
         p.start()
-        time.sleep(0.1)  # restrict too dense api calling
+        time.sleep(0.2)  # restrict too dense api calling
 
     start_time = time.time()
     completed = 0
